@@ -117,6 +117,8 @@ class wayfire_scale : public wf::per_output_plugin_instance_t,
     wf::option_wrapper_t<bool> allow_scale_zoom{"scale/allow_zoom"};
     wf::option_wrapper_t<bool> include_minimized{"scale/include_minimized"};
     wf::option_wrapper_t<bool> close_on_new_view{"scale/close_on_new_view"};
+    wf::option_wrapper_t<int> drag_distance{"scale/drag_distance"};
+    bool hideAll = false;
 
     /* maximum scale -- 1.0 means we will not "zoom in" on a view */
     const double max_scale_factor = 1.0;
@@ -479,8 +481,8 @@ class wayfire_scale : public wf::per_output_plugin_instance_t,
         if (!view || (last_selected_view != view))
         {
             if(view_to_close && 
-                (drag_start_position.y - input_position.y) > 300.0 && 
-                wf::get_current_time() - drag_start_time < 250){
+                (drag_start_position.y - input_position.y) > drag_distance && 
+                wf::get_current_time() - drag_start_time < 300){
                 view_to_close->close();
                 view_to_close = nullptr;
             }
