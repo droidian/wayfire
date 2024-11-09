@@ -375,6 +375,7 @@ int main(int argc, char *argv[])
     core.ev_loop = wl_display_get_event_loop(core.display);
     core.backend = wlr_backend_autocreate(core.display, &core.session);
 
+#ifndef ANDROID_RENDERER
     int drm_fd = wlr_backend_get_drm_fd(core.backend);
     if (drm_fd < 0)
     {
@@ -395,10 +396,20 @@ int main(int argc, char *argv[])
     }
 
     core.renderer = wlr_gles2_renderer_create_with_drm_fd(drm_fd);
+#endif
+
+#ifdef ANDROID_RENDERER
+    core.renderer = wlr_renderer_autocreate(core.backend);
+    wlr_android_renderer_init_wl_display (core.renderer, core.display);
+#endif
     assert(core.renderer);
     core.allocator = wlr_allocator_autocreate(core.backend, core.renderer);
     assert(core.allocator);
+#ifndef ANDROID_RENDERER
     core.egl = wlr_gles2_renderer_get_egl(core.renderer);
+#else
+    core.egl = wlr_android_renderer_get_egl(core.renderer);
+#endif
     assert(core.egl);
 
     if (!drop_permissions())

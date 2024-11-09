@@ -85,6 +85,9 @@ extern "C"
 #if WLR_HAS_X11_BACKEND
     #include <wlr/backend/x11.h>
 #endif
+#if ANDROID_RENDERER
+    #include <wlr/render/android.h>
+#endif
 #include <wlr/backend/wayland.h>
 #undef static
 #include <wlr/backend/headless.h>
