@@ -328,7 +328,11 @@ struct swapchain_damage_manager_t
         // creeps into the current frame damage, if we had skipped a frame.
         accumulate_damage(next_frame->buffer_age);
 
+#ifdef ANDROID_RENDERER
+        next_frame->render_pass = wlr_renderer_begin_buffer_pass_for_output(output->renderer, next_frame->buffer, NULL, output);
+#else
         next_frame->render_pass = wlr_renderer_begin_buffer_pass(output->renderer, next_frame->buffer, NULL);
+#endif
         if (!next_frame->render_pass)
         {
             LOGE("Failed to start a render pass!");
@@ -341,8 +345,9 @@ struct swapchain_damage_manager_t
 
     void swap_buffers(std::unique_ptr<frame_object_t> next_frame, const wf::region_t& swap_damage)
     {
+#ifndef ANDROID_RENDERER
         frame_damage.clear();
-
+#endif
         if (!wlr_render_pass_submit(next_frame->render_pass))
         {
             LOGE("Failed to submit render pass!");
@@ -1102,7 +1107,12 @@ class wf::render_manager::impl
 
     void update_bound_output()
     {
+#ifdef ANDROID_RENDERER
+        int current_fb;
+        GL_CALL(glGetIntegerv(GL_FRAMEBUFFER_BINDING, &current_fb));
+#else
         int current_fb = wlr_gles2_renderer_get_current_fbo(output->handle->renderer);
+#endif
         bind_output(current_fb);
 
         postprocessing->set_output_framebuffer(current_fb);
@@ -1137,6 +1147,9 @@ class wf::render_manager::impl
         }
 
         /* Part 2: call the renderer, which sets swap_damage and draws the scenegraph */
+#ifdef ANDROID_RENDERER
+        output->handle->renderer->rendering = false;
+#endif
         wlr_renderer_begin_with_buffer(output->handle->renderer, next_frame->buffer);
         update_bound_output();
         render_output();
@@ -1170,7 +1183,13 @@ class wf::render_manager::impl
         OpenGL::render_end();
 
         /* Part 6: finalize frame: swap buffers, send frame_done, etc */
+#ifdef ANDROID_RENDERER
+        output->handle->renderer->rendering = true;
+#endif
         damage_manager->swap_buffers(std::move(next_frame), swap_damage);
+#ifdef ANDROID_RENDERER
+        output->handle->renderer->rendering = false;
+#endif
         OpenGL::unbind_output(output);
         swap_damage.clear();
         post_paint();
