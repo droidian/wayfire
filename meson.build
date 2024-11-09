@@ -61,6 +61,7 @@ wlroots_features = {
   'libinput_backend': false,
   'session': false,
   'x11_backend': false,
+  'hwcomposer_backend': false,
 }
 
 foreach name, _ : wlroots_features
@@ -168,6 +169,12 @@ else
   conf_data.set('USE_GLES32', false)
 endif
 
+if get_option('enable_android_renderer') and not wlroots_features['hwcomposer_backend']
+  message('Cannot enable Android renderer in wayfire: wlroots has been built without Hwcomposer backend')
+elif get_option('enable_android_renderer') and wlroots_features['hwcomposer_backend']
+  add_project_arguments(['-DANDROID_RENDERER'], language: ['cpp', 'c'])
+endif
+
 if png.found() and jpeg.found()
   conf_data.set('BUILD_WITH_IMAGEIO', true)
 else
@@ -223,14 +230,15 @@ summary = [
 	'----------------',
 	'wayfire @0@'.format(meson.project_version()),
 	'',
-    'system wfconfig: @0@'.format(use_system_wfconfig),
-    ' system wlroots: @0@'.format(use_system_wlroots),
-    '       xwayland: @0@'.format(wlroots_features['xwayland']),
-    '    x11-backend: @0@'.format(wlroots_features['x11_backend']),
-    '        imageio: @0@'.format(conf_data.get('BUILD_WITH_IMAGEIO')),
-    '         gles32: @0@'.format(conf_data.get('USE_GLES32')),
-    '    print trace: @0@'.format(print_trace),
-    '     unit tests: @0@'.format(doctest.found()),
+    '    system wfconfig: @0@'.format(use_system_wfconfig),
+    '     system wlroots: @0@'.format(use_system_wlroots),
+    '           xwayland: @0@'.format(wlroots_features['xwayland']),
+    '        x11-backend: @0@'.format(wlroots_features['x11_backend']),
+    ' hwcomposer-backend: @0@'.format(wlroots_features['hwcomposer_backend']),
+    '            imageio: @0@'.format(conf_data.get('BUILD_WITH_IMAGEIO')),
+    '             gles32: @0@'.format(conf_data.get('USE_GLES32')),
+    '        print trace: @0@'.format(print_trace),
+    '         unit tests: @0@'.format(doctest.found()),
     '----------------',
     ''
 ]
