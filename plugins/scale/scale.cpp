@@ -283,6 +283,7 @@ class wayfire_scale : public wf::per_output_plugin_instance_t,
         if (active && (all_same_as_current_workspace_views() ||
                        (want_all_workspaces == this->all_workspaces)))
         {
+            hideAll = true;
             deactivate();
             return true;
         }
@@ -468,8 +469,10 @@ class wayfire_scale : public wf::per_output_plugin_instance_t,
                 drag_start_time = wf::get_current_time();
             } else
             {
+                hideAll = true;
                 last_selected_view = nullptr;
                 view_to_close = nullptr;
+                deactivate();
             }
 
             drag_helper->set_pending_drag(input_position);
@@ -486,8 +489,18 @@ class wayfire_scale : public wf::per_output_plugin_instance_t,
                 view_to_close->close();
                 view_to_close = nullptr;
             }
+            hideAll = true;
+            for (auto& view : output->wset()->get_views())
+            {
+                if (!view->minimized)
+                    hideAll = false;
+            }
+
             view_to_close = nullptr;
             last_selected_view = nullptr;
+
+            if(hideAll)
+                deactivate();
             // Operation was cancelled, for ex. dragged outside of the view
             return;
         }
@@ -1315,6 +1328,15 @@ class wayfire_scale : public wf::per_output_plugin_instance_t,
             return false;
         }
 
+        hideAll = false;
+        for (auto& view : output->wset()->get_views())
+        {
+            if (view->minimized)
+            {
+                wf::get_core().default_wm->minimize_request(view, false);
+            }
+        }
+
         if (!output->activate_plugin(&grab_interface))
         {
             return false;
@@ -1384,27 +1406,38 @@ class wayfire_scale : public wf::per_output_plugin_instance_t,
         grab->ungrab_input();
         output->deactivate_plugin(&grab_interface);
 
-        for (auto& e : scale_data)
-        {
-            if (e.first->minimized && (e.first != current_focus_view))
+        if(hideAll){
+            for (auto& view : output->wset()->get_views())
             {
-                e.second.visibility =
-                    view_scale_data::view_visibility_t::HIDING;
-                setup_view_transform(e.second, 1, 1, 0, 0, 0);
-            } else
-            {
-                fade_in(e.first);
-                setup_view_transform(e.second, 1, 1, 0, 0, 1);
-                if (e.second.visibility == view_scale_data::view_visibility_t::HIDDEN)
+                if (!view->minimized)
                 {
-                    wf::scene::set_node_enabled(e.first->get_transformed_node(), true);
+                    wf::get_core().default_wm->minimize_request(view, true);
                 }
-
-                e.second.visibility = view_scale_data::view_visibility_t::VISIBLE;
             }
-        }
+        } else {
+            for (auto& e : scale_data)
+            {
+                if (e.first->minimized && (e.first != current_focus_view))
+                {
+                    e.second.visibility =
+                    view_scale_data::view_visibility_t::HIDING;
+                    setup_view_transform(e.second, 1, 1, 0, 0, 0);
+                } else
+                {
+                    fade_in(e.first);
+                    setup_view_transform(e.second, 1, 1, 0, 0, 1);
+                    if (e.second.visibility == view_scale_data::view_visibility_t::HIDDEN)
+                    {
+                        wf::scene::set_node_enabled(e.first->get_transformed_node(), true);
+                    }
 
-        refocus();
+                    e.second.visibility = view_scale_data::view_visibility_t::VISIBLE;
+                }
+            }
+
+            refocus();
+        }
+        hideAll = false;
         scale_end_signal signal;
         output->emit(&signal);
     }
