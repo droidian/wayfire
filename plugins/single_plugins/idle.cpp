@@ -15,6 +15,8 @@
 #include <wayfire/util/log.hpp>
 #include <wayfire/nonstd/wlroots-full.hpp>
 
+#include <linux/input-event-codes.h>
+
 #define CUBE_ZOOM_BASE 1.0
 
 enum cube_screensaver_state
@@ -83,6 +85,25 @@ class wayfire_idle
         });
     }
 
+    bool get_idle()
+    {
+        return is_idle;
+    }
+
+    void set_idle(bool idle)
+    {
+        if (is_idle)
+        {
+            is_idle = false;
+            set_state(wf::OUTPUT_IMAGE_SOURCE_DPMS, wf::OUTPUT_IMAGE_SOURCE_SELF);
+        } else
+        {
+            is_idle = true;
+            set_state(wf::OUTPUT_IMAGE_SOURCE_SELF, wf::OUTPUT_IMAGE_SOURCE_DPMS);
+        }
+        
+    }
+
     ~wayfire_idle()
     {
         timeout_dpms.disconnect();
@@ -125,6 +146,7 @@ class wayfire_idle_plugin : public wf::per_output_plugin_instance_t
     bool hook_set = false;
     bool output_inhibited = false;
     uint32_t last_time;
+    uint32_t pwr_pressed_time;
     wf::wl_timer<false> timeout_screensaver;
     wf::signal::connection_t<wf::seat_activity_signal> on_seat_activity;
     wf::shared_data::ref_ptr_t<wayfire_idle> global_idle;
@@ -172,6 +194,25 @@ class wayfire_idle_plugin : public wf::per_output_plugin_instance_t
         }
     };
 
+    wf::signal::connection_t<wf::input_event_signal<wlr_keyboard_key_event>> on_key_event =
+        [=] (wf::input_event_signal<wlr_keyboard_key_event> *ev)
+    {
+        if ((ev->event->keycode != KEY_POWER))
+            return;
+        
+        if (ev->event->state == WLR_KEY_PRESSED)
+        {
+            pwr_pressed_time = wf::get_current_time();
+        } else if ((wf::get_current_time() - pwr_pressed_time < 250))
+        {
+            if(global_idle->get_idle())
+                global_idle->set_idle(false);
+            else
+                global_idle->set_idle(true);
+            
+        }
+    };
+
     wf::config::option_base_t::updated_callback_t disable_on_fullscreen_changed =
         [=] ()
     {
@@ -207,6 +248,7 @@ class wayfire_idle_plugin : public wf::per_output_plugin_instance_t
 
         output->add_activator(wf::option_wrapper_t<wf::activatorbinding_t>{"idle/toggle"}, &toggle);
         output->connect(&fullscreen_state_changed);
+        wf::get_core().connect(&on_key_event);
         disable_on_fullscreen.set_callback(disable_on_fullscreen_changed);
 
         if (auto toplevel = toplevel_cast(wf::get_active_view_for_output(output)))
@@ -420,6 +462,7 @@ class wayfire_idle_plugin : public wf::per_output_plugin_instance_t
     {
         wf::get_core().disconnect(&on_seat_activity);
         wf::get_core().disconnect(&inhibit_changed);
+        wf::get_core().disconnect(&on_key_event);
         timeout_screensaver.disconnect();
         output->rem_binding(&toggle);
     }
