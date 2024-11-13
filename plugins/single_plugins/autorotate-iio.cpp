@@ -26,6 +26,18 @@ extern "C"
 using namespace Gio;
 class WayfireAutorotateIIO : public wf::per_output_plugin_instance_t
 {
+    wf::wl_timer<true> timeout_loop;
+    
+    void create_loop_timeout()
+    {
+        timeout_loop.disconnect();
+        timeout_loop.set_timeout(1000, [=] ()
+        {
+            Glib::MainContext::get_default()->iteration(false);
+            return true;
+        });
+    }
+
     /* Tries to detect whether autorotate is enabled for the current output.
      * Currently it is enabled only for integrated panels */
     bool is_autorotate_enabled()
@@ -154,10 +166,6 @@ class WayfireAutorotateIIO : public wf::per_output_plugin_instance_t
         return true;
     }
 
-    wf::effect_hook_t on_frame = [=] ()
-    {
-        Glib::MainContext::get_default()->iteration(false);
-    };
     Glib::RefPtr<Glib::MainLoop> loop;
 
   public:
@@ -171,6 +179,7 @@ class WayfireAutorotateIIO : public wf::per_output_plugin_instance_t
         on_input_devices_changed.emit(nullptr);
         wf::get_core().connect(&on_input_devices_changed);
 
+        create_loop_timeout();
         init_iio_sensors();
     }
 
@@ -185,7 +194,6 @@ class WayfireAutorotateIIO : public wf::per_output_plugin_instance_t
         Gio::init();
 
         loop = Glib::MainLoop::create(true);
-        output->render->add_effect(&on_frame, wf::OUTPUT_EFFECT_PRE);
 
         watch_id = DBus::watch_name(DBus::BUS_TYPE_SYSTEM, "net.hadess.SensorProxy",
             sigc::mem_fun(this, &WayfireAutorotateIIO::on_iio_appeared),
@@ -258,6 +266,7 @@ class WayfireAutorotateIIO : public wf::per_output_plugin_instance_t
         output->rem_binding(&on_rotate_right);
         output->rem_binding(&on_rotate_up);
         output->rem_binding(&on_rotate_down);
+        timeout_loop.disconnect();
 
         /* If loop is NULL, autorotate was disabled for the current output */
         if (loop)
@@ -265,7 +274,6 @@ class WayfireAutorotateIIO : public wf::per_output_plugin_instance_t
             iio_proxy.reset();
             DBus::unwatch_name(watch_id);
             loop->quit();
-            output->render->rem_effect(&on_frame);
         }
     }
 };
