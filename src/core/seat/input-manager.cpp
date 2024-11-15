@@ -80,8 +80,12 @@ void wf::input_manager_t::refresh_device_mappings()
                     dev)->output_name);
             } else if (dev->type == WLR_INPUT_DEVICE_TOUCH)
             {
+#ifdef ANDROID_RENDERER
+                mapped_output = "HWCOMPOSER-1";
+#else
                 mapped_output =
                     nonull(wlr_touch_from_input_device(dev)->output_name);
+#endif
             } else
             {
                 mapped_output = nonull(dev->name);
