@@ -43,7 +43,7 @@ class WayfireAutorotateIIO : public wf::per_output_plugin_instance_t
     bool is_autorotate_enabled()
     {
         static const std::string integrated_connectors[] = {
-            "HWCOMPOSER",
+            "HWCOMPOSER-1",
             "eDP",
             "LVDS",
             "DSI",
