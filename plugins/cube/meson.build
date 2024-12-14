@@ -4,3 +4,6 @@ animiate = shared_module('cube',
                          dependencies: [wlroots, pixman, wfconfig, json],
                          install: true,
                          install_dir: join_paths(get_option('libdir'), 'wayfire'))
+
+install_data('skydome.png', install_dir :
+    join_paths(get_option('prefix'), 'share/wayfire'))
