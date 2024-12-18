@@ -995,7 +995,7 @@ class output_layout_t::impl
         on_backend_destroy.set_callback([=] (auto) { deinit_noop(); });
         on_backend_destroy.connect(&wf::get_core().renderer->events.destroy);
 
-        output_layout = wlr_output_layout_create();
+        output_layout = wlr_output_layout_create(get_core().display);
         get_core().connect(&on_config_reload);
 
         noop_backend = wlr_headless_backend_create(get_core().display);

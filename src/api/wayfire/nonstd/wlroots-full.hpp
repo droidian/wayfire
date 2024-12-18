@@ -38,6 +38,7 @@ extern "C"
 #include <wlr/types/wlr_damage_ring.h>
 #include <wlr/types/wlr_presentation_time.h>
 #include <wlr/util/region.h>
+#include <wlr/util/transform.h>
 #include <wlr/types/wlr_screencopy_v1.h>
 #include <wlr/types/wlr_export_dmabuf_v1.h>
 #include <wlr/types/wlr_keyboard_shortcuts_inhibit_v1.h>
