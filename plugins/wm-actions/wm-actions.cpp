@@ -292,6 +292,31 @@ class wayfire_wm_actions_output_t : public wf::per_output_plugin_instance_t
         return true;
     }
 
+    bool on_plamo_showdesktop()
+    {
+        showdesktop_active = !showdesktop_active;
+
+        if (showdesktop_active)
+        {
+            for (auto& view : output->wset()->get_views())
+            {
+                if (!view->minimized)
+                {
+                    wf::get_core().default_wm->minimize_request(view, true);
+                    view->store_data(std::make_unique<wf::custom_data_t>(), "wm-actions-showdesktop");
+                }
+            }
+
+            output->connect(&view_set_output);
+            output->connect(&workspace_changed);
+            output->connect(&view_minimized);
+            output->connect(&on_view_mapped);
+            return true;
+        }
+
+        return true;
+    }
+
     void do_send_to_back(wayfire_view view)
     {
         auto view_root = view->get_root_node();
@@ -397,6 +422,7 @@ class wayfire_wm_actions_t : public wf::plugin_interface_t,
 {
     wf::shared_data::ref_ptr_t<wf::ipc::method_repository_t> ipc_repo;
     wf::ipc_activator_t toggle_showdesktop{"wm-actions/toggle_showdesktop"};
+    wf::ipc_activator_t plamo_showdesktop{"wm-actions/plamo_showdesktop"};
 
   public:
     void init() override
@@ -408,6 +434,7 @@ class wayfire_wm_actions_t : public wf::plugin_interface_t,
         ipc_repo->register_method("wm-actions/set-sticky", ipc_set_sticky);
         ipc_repo->register_method("wm-actions/send-to-back", ipc_send_to_back);
         toggle_showdesktop.set_handler(on_toggle_showdesktop);
+        plamo_showdesktop.set_handler(on_plamo_showdesktop);
     }
 
     void fini() override
@@ -499,6 +526,11 @@ class wayfire_wm_actions_t : public wf::plugin_interface_t,
     wf::ipc_activator_t::handler_t on_toggle_showdesktop = [=] (wf::output_t *output, wayfire_view)
     {
         return this->output_instance[output]->on_toggle_showdesktop();
+    };
+
+    wf::ipc_activator_t::handler_t on_plamo_showdesktop = [=] (wf::output_t *output, wayfire_view)
+    {
+        return this->output_instance[output]->on_plamo_showdesktop();
     };
 };
 
