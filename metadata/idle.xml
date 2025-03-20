@@ -17,9 +17,14 @@
 			<default>3600</default>
 		</option>
 		<!-- DPMS -->
+		<option name="ipc_event_only" type="bool">
+			<_short>Only send DPMS IPC event</_short>
+			<_long>Only send DPMS IPC event and do not enter power saving mode.</_long>
+			<default>true</default>
+		</option>
 		<option name="dpms_timeout" type="int">
 			<_short>DPMS timeout</_short>
-			<_long>Enters power saving mode after the specified seconds of inactivity.  Setting the value to **-1** disables power saving.</_long>
+			<_long>Enters power saving mode (if ipc_event_only is false) and send DPMS IPC event after the specified seconds of inactivity.  Setting the value to **-1** disables power saving.</_long>
 			<default>-1</default>
 		</option>
 		<!-- Disable on fullscreen -->
