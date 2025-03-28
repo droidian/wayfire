@@ -15,6 +15,33 @@
 #include "text-input-v1-v3.hpp"
 #include "input-method-v1.hpp"
 
+#include <xkbcommon/xkbcommon.h>
+#include <linux/input-event-codes.h>
+
+uint32_t keyFromKeysym (uint32_t sym)
+{
+    switch (sym) {
+        case XKB_KEY_BackSpace:
+            return KEY_BACKSPACE;
+        case XKB_KEY_Return:
+            return KEY_ENTER;
+        case XKB_KEY_Left:
+            return KEY_LEFT;
+        case XKB_KEY_Up:
+            return KEY_UP;
+        case XKB_KEY_Right:
+            return KEY_RIGHT;
+        case XKB_KEY_Down:
+            return KEY_DOWN;
+        case XKB_KEY_Tab:
+            return KEY_TAB;
+        case XKB_KEY_Escape:
+            return KEY_ESC;
+        default:
+            return 0;
+    }
+}
+
 class wayfire_input_method_v1_context
 {
   public:
@@ -312,7 +339,12 @@ void handle_im_context_keysym(wl_client *client, wl_resource *resource,
     auto context = static_cast<wayfire_input_method_v1_context*>(wl_resource_get_user_data(resource));
     if (context && context->text_input)
     {
-        context->text_input->send_keysym(serial, time, sym, state, modifiers);
+        wayfire_im_v1_text_input_v3* ti_v3 = dynamic_cast<wayfire_im_v1_text_input_v3*>(context->text_input);
+
+        if(ti_v3)
+            context->handle_im_key(time, keyFromKeysym(sym), state);
+        else
+            context->text_input->send_keysym(serial, time, sym, state, modifiers);
     }
 }
 
