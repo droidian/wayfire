@@ -1,0 +1,8 @@
+<?xml version="1.0"?>
+<wayfire>
+	<plugin name="mobile-tweaks">
+		<_short>Mobile-Tweaks plugin</_short>
+		<_long>A plugin targetting mobile devices.</_long>
+		<category>Utility</category>
+	</plugin>
+</wayfire>
