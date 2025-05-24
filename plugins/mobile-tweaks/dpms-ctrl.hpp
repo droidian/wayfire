@@ -7,6 +7,7 @@ class dpms_ctrl
     ~dpms_ctrl();
     
     wf::option_wrapper_t<int> ini_dpms_timeout{"mobile-tweaks/dpms_timeout"};
+    wf::option_wrapper_t<bool> ini_wake_up_any{"mobile-tweaks/wake_up_any"};
 
     wf::signal::connection_t<wf::seat_activity_signal> on_seat_activity;
     wf::signal::connection_t<wf::input_event_signal<wlr_keyboard_key_event>> on_key_event;

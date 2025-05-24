@@ -64,7 +64,7 @@ void dpms_ctrl::handle_seat_activity()
     if(m_ignoreActivity.is_connected() || ini_dpms_timeout < 1)
         return;
 
-    if(m_idle)
+    if(m_idle && ini_wake_up_any)
         set_state(wf::OUTPUT_IMAGE_SOURCE_SELF);
 
     m_idleTimeOut.disconnect();

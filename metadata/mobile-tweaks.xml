@@ -11,6 +11,11 @@
 				<_long>Turn screen off on inactivity. If 0, screen does not turn off on inactivity.</_long>
 				<default>60</default>
 			</option>
+			<option name="wake_up_any" type="bool">
+				<_short>Wake up screen with any key</_short>
+				<_long>Wake up screen with any key.</_long>
+				<default>true</default>
+			</option>
 		</group>
 	</plugin>
 </wayfire>
