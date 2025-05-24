@@ -4,5 +4,13 @@
 		<_short>Mobile-Tweaks plugin</_short>
 		<_long>A plugin targetting mobile devices.</_long>
 		<category>Utility</category>
+		<group>
+			<_short>DPMS</_short>
+			<option name="dpms_timeout" type="int">
+				<_short>Screen Off after seconds</_short>
+				<_long>Turn screen off on inactivity. If 0, screen does not turn off on inactivity.</_long>
+				<default>60</default>
+			</option>
+		</group>
 	</plugin>
 </wayfire>

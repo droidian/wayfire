@@ -38,7 +38,10 @@ dpms_ctrl::~dpms_ctrl()
 
 void dpms_ctrl::create_dpms_timeout()
 {
-    m_idleTimeOut.set_timeout(60000, [=] ()
+    if(ini_dpms_timeout < 1)
+        return;
+
+    m_idleTimeOut.set_timeout(1000 * ini_dpms_timeout, [=] ()
     {
         set_state(wf::OUTPUT_IMAGE_SOURCE_DPMS);
     });
@@ -58,7 +61,7 @@ void dpms_ctrl::set_state(wf::output_image_source_t to)
 
 void dpms_ctrl::handle_seat_activity()
 {
-    if(m_ignoreActivity.is_connected())
+    if(m_ignoreActivity.is_connected() || ini_dpms_timeout < 1)
         return;
 
     if(m_idle)
