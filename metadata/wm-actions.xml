@@ -34,6 +34,11 @@
 			<_long>Minimize all Views.</_long>
 			<default>disabled</default>
 		</option>
+		<option name="close" type="activator">
+			<_short>Close View</_short>
+			<_long>Send close request to the active view.</_long>
+			<default>disabled</default>
+		</option>
 		<option name="toggle_showdesktop" type="activator">
 			<_short>Toggle Show Desktop</_short>
 			<_long>Show the desktop.</_long>
