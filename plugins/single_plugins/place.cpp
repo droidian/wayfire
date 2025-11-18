@@ -7,6 +7,8 @@
 #include <wayfire/window-manager.hpp>
 #include <wayfire/signal-definitions.hpp>
 
+wf::wl_timer<false> resize_timer;
+
 class wayfire_place_window : public wf::per_output_plugin_instance_t
 {
     wf::signal::connection_t<wf::view_mapped_signal> on_view_mapped = [=] (wf::view_mapped_signal *ev)
@@ -121,6 +123,13 @@ class wayfire_place_window : public wf::per_output_plugin_instance_t
     void maximize(wayfire_toplevel_view & view, wf::geometry_t workarea)
     {
         wf::get_core().default_wm->tile_request(view, wf::TILED_EDGES_ALL);
+
+        //This should not be needed. But some qt6/kde6 apps randomly do not resize to the edges.
+        resize_timer.disconnect();
+        resize_timer.set_timeout(250, [view] ()
+        {
+            wf::get_core().default_wm->tile_request(view, wf::TILED_EDGES_ALL);
+        });
     }
 };
 
