@@ -325,6 +325,14 @@ class wayfire_wm_actions_output_t : public wf::per_output_plugin_instance_t
 
     wf::activator_callback on_send_to_back = [=] (auto ev) -> bool
     {
+        for (auto& view : output->wset()->get_views())
+        {
+            if (view->minimized){
+                wf::get_core().default_wm->minimize_request(view, false);
+                return true;
+            }
+        }
+
         return execute_for_selected_view(ev.source, [this] (wayfire_view view)
         {
             auto views = view->get_output()->wset()->get_views(
