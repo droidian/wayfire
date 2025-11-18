@@ -36,6 +36,8 @@ class wayfire_wm_actions_output_t : public wf::per_output_plugin_instance_t
 
     wf::option_wrapper_t<wf::activatorbinding_t> minimize{
         "wm-actions/minimize"};
+    wf::option_wrapper_t<wf::activatorbinding_t> minimize_all{
+        "wm-actions/minimize_all"};
     wf::option_wrapper_t<wf::activatorbinding_t> toggle_maximize{
         "wm-actions/toggle_maximize"};
     wf::option_wrapper_t<wf::activatorbinding_t> toggle_above{
@@ -236,6 +238,16 @@ class wayfire_wm_actions_output_t : public wf::per_output_plugin_instance_t
         });
     };
 
+    wf::activator_callback on_minimize_all = [=] (auto ev) -> bool
+    {
+        for (auto& view : output->wset()->get_views())
+        {
+            if (!view->minimized)
+                wf::get_core().default_wm->minimize_request(view, true);
+        }
+        return true;
+    };
+
     wf::activator_callback on_toggle_maximize = [=] (auto ev) -> bool
     {
         return execute_for_selected_view(ev.source, [] (wayfire_toplevel_view view)
@@ -362,6 +374,7 @@ class wayfire_wm_actions_output_t : public wf::per_output_plugin_instance_t
         always_above = std::make_shared<always_on_top_root_node_t>(output);
         wf::scene::add_front(wf::get_core().scene()->layers[(int)wf::scene::layer::WORKSPACE], always_above);
         output->add_activator(minimize, &on_minimize);
+        output->add_activator(minimize_all, &on_minimize_all);
         output->add_activator(toggle_maximize, &on_toggle_maximize);
         output->add_activator(toggle_above, &on_toggle_above);
         output->add_activator(toggle_fullscreen, &on_toggle_fullscreen);
@@ -384,6 +397,7 @@ class wayfire_wm_actions_output_t : public wf::per_output_plugin_instance_t
 
         wf::scene::remove_child(always_above);
         output->rem_binding(&on_minimize);
+        output->rem_binding(&on_minimize_all);
         output->rem_binding(&on_toggle_maximize);
         output->rem_binding(&on_toggle_above);
         output->rem_binding(&on_toggle_fullscreen);
