@@ -23,6 +23,10 @@ extern "C"
 #include <wlr/types/wlr_seat.h>
 }
 
+#include "wayfire/plugins/common/shared-core-data.hpp"
+#include "plugins/ipc/ipc-helpers.hpp"
+#include "plugins/ipc/ipc-method-repository.hpp"
+
 using namespace Gio;
 class WayfireAutorotateIIO : public wf::per_output_plugin_instance_t
 {
@@ -144,7 +148,7 @@ class WayfireAutorotateIIO : public wf::per_output_plugin_instance_t
         if (user_rotation >= 0)
         {
             transform_to_use = (wl_output_transform)user_rotation;
-        } else if ((sensor_transform >= 0) && !config_rotation_locked)
+        } else if ((sensor_transform >= 0) && !ipc_rotation_locked && !config_rotation_locked)
         {
             transform_to_use = (wl_output_transform)sensor_transform;
         } else
@@ -168,6 +172,18 @@ class WayfireAutorotateIIO : public wf::per_output_plugin_instance_t
 
     Glib::RefPtr<Glib::MainLoop> loop;
 
+    wf::shared_data::ref_ptr_t<wf::ipc::method_repository_t> ipc_repo;
+
+    bool ipc_rotation_locked = false;
+
+    wf::ipc::method_callback ipc_toggle_rotation_lock = [=] (nlohmann::json data) -> nlohmann::json
+    {
+        ipc_rotation_locked = !ipc_rotation_locked;
+        nlohmann::json response = wf::ipc::json_ok();
+        response["rotation_locked"] = config_rotation_locked.value();
+        return response;
+    };
+
   public:
     void init() override
     {
@@ -181,6 +197,8 @@ class WayfireAutorotateIIO : public wf::per_output_plugin_instance_t
 
         create_loop_timeout();
         init_iio_sensors();
+
+        ipc_repo->register_method("autorotate-iio/toggle-rotation-lock", ipc_toggle_rotation_lock);
     }
 
     void init_iio_sensors()
@@ -267,6 +285,8 @@ class WayfireAutorotateIIO : public wf::per_output_plugin_instance_t
         output->rem_binding(&on_rotate_up);
         output->rem_binding(&on_rotate_down);
         timeout_loop.disconnect();
+
+        ipc_repo->unregister_method("autorotate-iio/toggle-rotation-lock");
 
         /* If loop is NULL, autorotate was disabled for the current output */
         if (loop)
