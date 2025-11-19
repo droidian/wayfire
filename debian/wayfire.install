@@ -1,5 +1,4 @@
 usr/bin/
-usr/lib/*/libwayfire-blur-base.so
 usr/lib/*/wayfire/
 usr/share/man/man1/wayfire.1
 usr/share/wayfire/
