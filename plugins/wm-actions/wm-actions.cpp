@@ -38,8 +38,6 @@ class wayfire_wm_actions_output_t : public wf::per_output_plugin_instance_t
         "wm-actions/minimize"};
     wf::option_wrapper_t<wf::activatorbinding_t> close{
         "wm-actions/close"};
-    wf::option_wrapper_t<wf::activatorbinding_t> minimize_all{
-        "wm-actions/minimize_all"};
     wf::option_wrapper_t<wf::activatorbinding_t> toggle_maximize{
         "wm-actions/toggle_maximize"};
     wf::option_wrapper_t<wf::activatorbinding_t> toggle_above{
@@ -249,7 +247,7 @@ class wayfire_wm_actions_output_t : public wf::per_output_plugin_instance_t
         });
     };
 
-    wf::activator_callback on_minimize_all = [=] (auto ev) -> bool
+    bool on_minimize_all()
     {
         for (auto& view : output->wset()->get_views())
         {
@@ -393,7 +391,6 @@ class wayfire_wm_actions_output_t : public wf::per_output_plugin_instance_t
         always_above = std::make_shared<always_on_top_root_node_t>(output);
         wf::scene::add_front(wf::get_core().scene()->layers[(int)wf::scene::layer::WORKSPACE], always_above);
         output->add_activator(minimize, &on_minimize);
-        output->add_activator(minimize_all, &on_minimize_all);
         output->add_activator(close, &on_close);
         output->add_activator(toggle_maximize, &on_toggle_maximize);
         output->add_activator(toggle_above, &on_toggle_above);
@@ -417,7 +414,6 @@ class wayfire_wm_actions_output_t : public wf::per_output_plugin_instance_t
 
         wf::scene::remove_child(always_above);
         output->rem_binding(&on_minimize);
-        output->rem_binding(&on_minimize_all);
         output->rem_binding(&on_close);
         output->rem_binding(&on_toggle_maximize);
         output->rem_binding(&on_toggle_above);
@@ -432,23 +428,27 @@ class wayfire_wm_actions_t : public wf::plugin_interface_t,
 {
     wf::shared_data::ref_ptr_t<wf::ipc::method_repository_t> ipc_repo;
     wf::ipc_activator_t toggle_showdesktop{"wm-actions/toggle_showdesktop"};
+    wf::ipc_activator_t minimize_all{"wm-actions/minimize_all"};
 
   public:
     void init() override
     {
         init_output_tracking();
         ipc_repo->register_method("wm-actions/set-minimized", ipc_minimize);
+        ipc_repo->register_method("wm-actions/request_close", ipc_request_close);
         ipc_repo->register_method("wm-actions/set-always-on-top", ipc_set_always_on_top);
         ipc_repo->register_method("wm-actions/set-fullscreen", ipc_set_fullscreen);
         ipc_repo->register_method("wm-actions/set-sticky", ipc_set_sticky);
         ipc_repo->register_method("wm-actions/send-to-back", ipc_send_to_back);
         toggle_showdesktop.set_handler(on_toggle_showdesktop);
+        minimize_all.set_handler(on_minimize_all);
     }
 
     void fini() override
     {
         fini_output_tracking();
         ipc_repo->unregister_method("wm-actions/set-minimized");
+        ipc_repo->unregister_method("wm-actions/request_close");
         ipc_repo->unregister_method("wm-actions/set-always-on-top");
         ipc_repo->unregister_method("wm-actions/set-fullscreen");
         ipc_repo->unregister_method("wm-actions/set-sticky");
@@ -477,6 +477,14 @@ class wayfire_wm_actions_t : public wf::plugin_interface_t,
         return execute_for_view(js, [=] (wayfire_toplevel_view view, bool state)
         {
             wf::get_core().default_wm->minimize_request(view, state);
+        });
+    };
+
+    wf::ipc::method_callback ipc_request_close = [=] (const nlohmann::json& js)
+    {
+        return execute_for_view(js, [=] (wayfire_toplevel_view view, bool state)
+        {
+            view->close();
         });
     };
 
@@ -534,6 +542,11 @@ class wayfire_wm_actions_t : public wf::plugin_interface_t,
     wf::ipc_activator_t::handler_t on_toggle_showdesktop = [=] (wf::output_t *output, wayfire_view)
     {
         return this->output_instance[output]->on_toggle_showdesktop();
+    };
+
+    wf::ipc_activator_t::handler_t on_minimize_all = [=] (wf::output_t *output, wayfire_view)
+    {
+        return this->output_instance[output]->on_minimize_all();
     };
 };
 
